@@ -1,30 +1,556 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuoteVoice — Speak the job. Send the quote.</title>
-<meta name="description" content="QuoteVoice turns a spoken job into a professional quote and sends it on WhatsApp. For solar installers, electricians, plumbers and AC technicians.">
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuoteVoice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Noto+Kufi+Arabic:wght@600;800&family=Noto+Naskh+Arabic:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: the voice → receipt transformation is the hero; everything else is quiet support around it.
+   The receipt stays paper in both themes and always reads left-to-right, like the real PDF. */
+:root {
+  --bg: #F2F6F4;
+  --surface: #FFFFFF;
+  --ink: #10201D;
+  --muted: #566A66;
+  --line: #DAE4E1;
+  --brand: #0F766E;
+  --brand-deep: #083F3B;
+  --brand-soft: #D6F1EC;
+  --amber: #E39B0B;
+  --paper: #FFFDF7;
+  --paper-ink: #1B2422;
+  --paper-muted: #6B7471;
+  --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --lh: 1.6;
+  --lh-head: 1.1;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A1311; --surface: #111C1A; --ink: #E6F0ED; --muted: #94A8A3; --line: #213330;
+    --brand: #2CC3B0; --brand-deep: #06302C; --brand-soft: #0F2E2A; --amber: #F2B33A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A1311; --surface: #111C1A; --ink: #E6F0ED; --muted: #94A8A3; --line: #213330;
+  --brand: #2CC3B0; --brand-deep: #06302C; --brand-soft: #0F2E2A; --amber: #F2B33A;
+  color-scheme: dark;
+}
+html[lang="ur"] { --f-display: 'Noto Nastaliq Urdu', serif; --f-body: 'Noto Nastaliq Urdu', serif; --lh: 2.15; --lh-head: 1.9; }
+html[lang="ar"] { --f-display: 'Noto Kufi Arabic', sans-serif; --f-body: 'Noto Naskh Arabic', serif; --lh: 1.85; --lh-head: 1.45; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: var(--lh); }
+h1, h2, h3 { font-family: var(--f-display); line-height: var(--lh-head); text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: var(--brand); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+/* Top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--ink); text-decoration: none; }
+.langs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.langs button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: .95rem; line-height: 1.6; }
+.langs button[lang="ur"] { font-family: 'Noto Nastaliq Urdu', serif; font-size: .9rem; }
+.langs button[lang="ar"] { font-family: 'Noto Kufi Arabic', sans-serif; font-size: .85rem; }
+.langs button[lang="en"] { font-family: 'Figtree', sans-serif; }
+.langs button[aria-pressed="true"] { background: var(--brand); color: #fff; }
+
+/* Hero */
+.hero { padding: 28px 0 8px; display: grid; gap: 18px; }
+.eyebrow { color: var(--brand); font-weight: 700; font-size: .95rem; letter-spacing: .02em; }
+html[lang="en"] .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+.hero h1 { font-size: clamp(2.3rem, 6vw, 4.4rem); font-weight: 800; max-width: 16ch; }
+html[lang="ur"] .hero h1 { font-weight: 700; font-size: clamp(2rem, 5vw, 3.5rem); }
+.hero .sub { color: var(--muted); max-width: 62ch; font-size: 1.08rem; }
+.cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; background: var(--brand); color: #fff; text-decoration: none; font-weight: 700; padding: 12px 22px; border-radius: 999px; border: 0; cursor: pointer; box-shadow: 0 6px 18px -8px rgba(15,118,110,.6); }
+.btn:hover { filter: brightness(1.08); }
+.note { color: var(--muted); font-size: .92rem; }
+
+/* Demo */
+.demo { margin: 28px 0 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: grid; gap: 18px; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tabs .label { color: var(--muted); font-weight: 600; margin-inline-end: 6px; font-size: .95rem; }
+.tab { border: 1px solid var(--line); background: var(--bg); padding: 8px 18px; border-radius: 999px; cursor: pointer; font-weight: 600; display: inline-flex; gap: 8px; align-items: center; line-height: 1.7; }
+.tab svg { width: 18px; height: 18px; }
+.tab[aria-selected="true"] { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+.stage { display: grid; grid-template-columns: 1fr auto 1.15fr; gap: 18px; align-items: center; }
+.say { display: grid; gap: 12px; align-content: start; }
+.tag { font-size: .85rem; font-weight: 700; color: var(--muted); }
+.bubble { background: var(--brand-deep); color: #EAF7F4; border-radius: 22px; border-start-start-radius: 6px; padding: 18px 20px; font-size: 1.12rem; display: grid; gap: 14px; }
+html[lang="ur"] .bubble { font-size: 1.05rem; }
+.wave { display: flex; gap: 3px; align-items: center; height: 26px; direction: ltr; }
+.wave i { display: block; width: 4px; border-radius: 2px; background: #5EEAD4; height: 30%; animation: wave 1.1s ease-in-out infinite; }
+@keyframes wave { 0%, 100% { transform: scaleY(.45); } 50% { transform: scaleY(1); } }
+.mic { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #E0F2EF; color: var(--brand-deep); flex: none; }
+.wave-row { display: flex; align-items: center; gap: 10px; }
+.arrow { display: grid; place-items: center; gap: 4px; color: var(--brand); text-align: center; font-size: .85rem; font-weight: 700; }
+.arrow svg { width: 44px; height: 44px; }
+html[dir="rtl"] .arrow svg { transform: scaleX(-1); }
+
+/* Receipt (always LTR, like the real PDF) */
+.receipt { direction: ltr; text-align: left; font-family: var(--f-mono); background: var(--paper); color: var(--paper-ink); border-radius: 14px 14px 0 0; padding: 18px 18px 26px; box-shadow: 0 18px 40px -22px rgba(8,63,59,.55), 0 0 0 1px rgba(16,32,29,.06); position: relative; font-size: .82rem; line-height: 1.5; }
+.receipt::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 10px; background: linear-gradient(-45deg, transparent 7px, var(--paper) 0) 0 0/14px 10px repeat-x, linear-gradient(45deg, transparent 7px, var(--paper) 0) 0 0/14px 10px repeat-x; }
+.r-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--paper-ink); padding-bottom: 8px; margin-bottom: 8px; }
+.r-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.15rem; letter-spacing: .06em; }
+.r-meta { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; color: var(--paper-muted); margin-bottom: 10px; }
+.r-meta b { color: var(--paper-ink); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-weight: 600; color: var(--paper-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; padding: 4px 0; border-bottom: 1px dashed #C9CFCD; }
+td { padding: 6px 0; border-bottom: 1px dashed #E2E6E4; vertical-align: top; }
+th.n, td.n { text-align: right; white-space: nowrap; padding-left: 10px; }
+td .unit { color: var(--paper-muted); font-size: .72rem; }
+.group td { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: #0F766E; font-weight: 600; padding-top: 10px; border-bottom: 0; }
+.r-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 8px; border-top: 2px solid var(--paper-ink); font-weight: 600; font-size: 1rem; }
+.r-total strong { font-size: 1.15rem; }
+.r-total .bar { display: block; height: 4px; width: 56px; background: #E39B0B; border-radius: 2px; margin-top: 4px; }
+.r-words { color: var(--paper-muted); font-style: italic; margin-top: 6px; font-size: .75rem; }
+.r-foot { display: flex; justify-content: space-between; margin-top: 12px; color: var(--paper-muted); font-size: .7rem; }
+.rows-in tr { animation: rowIn .45s cubic-bezier(.2,.7,.2,1) backwards; }
+@keyframes rowIn { from { opacity: .1; transform: translateY(6px); } }
+
+/* Sections */
+section { padding: 56px 0 8px; }
+.sec-head { display: grid; gap: 8px; margin-bottom: 22px; max-width: 70ch; }
+.sec-head h2 { font-size: clamp(1.6rem, 3.6vw, 2.4rem); font-weight: 800; }
+html[lang="ur"] .sec-head h2 { font-weight: 700; }
+.sec-head p { color: var(--muted); }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: step; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 8px; align-content: start; }
+.step .num { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2.4rem; line-height: 1; color: var(--amber); }
+.step h3 { font-size: 1.3rem; }
+.step p { color: var(--muted); }
+
+.trade-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 12px; align-content: start; }
+.tcard header { display: flex; align-items: center; gap: 12px; }
+.ticon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); flex: none; }
+.ticon svg { width: 24px; height: 24px; }
+.tcard h3 { font-size: 1.25rem; }
+.tcard .count { color: var(--muted); font-size: .9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; direction: ltr; justify-content: flex-start; }
+html[dir="rtl"] .chips { justify-content: flex-end; }
+.chip { font-family: 'Figtree', sans-serif; font-size: .82rem; line-height: 1.4; padding: 4px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.chip.more { color: var(--brand); border-color: var(--brand); background: transparent; font-weight: 600; }
+
+.money { background: var(--brand-deep); color: #EAF7F4; border-radius: 24px; padding: 28px 22px; display: grid; gap: 18px; }
+.money h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); }
+.money p { color: #B5D8D2; }
+.pairs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pair { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; }
+.pair .said { font-size: 1.05rem; }
+.pair .num { font-family: var(--f-mono); color: #FBD38D; font-size: 1.05rem; direction: ltr; text-align: start; font-variant-numeric: tabular-nums; }
+html[dir="rtl"] .pair .num { text-align: right; }
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.feat { padding: 18px 4px; border-top: 2px solid var(--line); display: grid; gap: 6px; align-content: start; }
+.feat svg { width: 26px; height: 26px; color: var(--brand); }
+.feat h3 { font-size: 1.15rem; }
+.feat p { color: var(--muted); }
+
+.faq { display: grid; gap: 10px; max-width: 820px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 18px; }
+summary { cursor: pointer; font-weight: 700; padding: 12px 0; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--brand); font-weight: 800; }
+details[open] summary::after { content: "–"; }
+details p { color: var(--muted); padding-bottom: 14px; }
+
+.join { margin: 56px 0 0; background: linear-gradient(135deg, var(--brand), var(--brand-deep)); color: #fff; border-radius: 24px; padding: 32px 24px; display: grid; gap: 12px; }
+.join h2 { font-size: clamp(1.6rem, 3.6vw, 2.4rem); }
+.join p { color: #D4EEEA; }
+.contact { display: inline-flex; flex-wrap: wrap; gap: 10px; align-items: center; background: rgba(255,255,255,.12); border-radius: 14px; padding: 10px 16px; width: fit-content; }
+.contact a { color: #fff; font-family: 'Figtree', sans-serif; font-weight: 700; direction: ltr; }
+footer { padding: 28px 0 40px; color: var(--muted); font-size: .9rem; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+
+@media (max-width: 860px) {
+  .stage { grid-template-columns: 1fr; }
+  .arrow svg { transform: rotate(90deg); }
+  html[dir="rtl"] .arrow svg { transform: rotate(90deg); }
+  .steps, .trade-cards, .features { grid-template-columns: 1fr; }
+  .pairs { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 420px) { .pairs { grid-template-columns: 1fr; } body { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) {
+  .wave i, .rows-in tr { animation: none; }
+}
+</style>
 </head>
 <body>
-<header><h1>QuoteVoice</h1><p>Speak the job. Send the quote.</p></header>
-<main>
-<div class="card">
-<p>QuoteVoice is a phone app for <strong>solar installers, electricians, plumbers and AC technicians</strong>.
-Describe the job out loud — in Urdu, English, Arabic or a mix — and QuoteVoice builds a priced quote from your own
-price list, makes a professional PDF and sends it to your customer on WhatsApp.</p>
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="#top" aria-label="QuoteVoice">
+      <svg width="38" height="38" viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="15" fill="#0F766E"/>
+        <path d="M18 12h28a3 3 0 0 1 3 3v35l-3.5-3-3.5 3-3.5-3-3.5 3-3.5-3-3.5 3-3.5-3-3.5 3V15a3 3 0 0 1 3-3z" fill="#FFFFFF"/>
+        <rect x="27" y="17" width="10" height="17" rx="5" fill="#0F766E"/>
+        <path d="M23 29a9 9 0 0 0 18 0" stroke="#0F766E" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M32 38v3" stroke="#0F766E" stroke-width="3" stroke-linecap="round"/>
+        <rect x="22" y="43" width="20" height="3" rx="1.5" fill="#F59E0B"/>
+      </svg>
+      QuoteVoice
+    </a>
+    <div class="langs" role="group" aria-label="Language">
+      <button type="button" id="lang-ur" lang="ur" data-lang="ur">اردو</button>
+      <button type="button" id="lang-en" lang="en" data-lang="en">English</button>
+      <button type="button" id="lang-ar" lang="ar" data-lang="ar">العربية</button>
+    </div>
+  </div>
+
+  <div class="hero" id="top">
+    <div class="eyebrow" data-t="eyebrow"></div>
+    <h1 data-t="title"></h1>
+    <p class="sub" data-t="sub"></p>
+    <div class="cta-row">
+      <a class="btn" href="#join" data-t="cta"></a>
+      <span class="note" data-t="note"></span>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="tabs" role="tablist" aria-labelledby="demo-label">
+      <span class="label" id="demo-label" data-t="pick"></span>
+      <button class="tab" role="tab" id="tab-solar" data-trade="solar"></button>
+      <button class="tab" role="tab" id="tab-electric" data-trade="electric"></button>
+      <button class="tab" role="tab" id="tab-plumber" data-trade="plumber"></button>
+    </div>
+    <div class="stage">
+      <div class="say">
+        <span class="tag" data-t="youSay"></span>
+        <div class="bubble">
+          <div class="wave-row">
+            <span class="mic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+            <div class="wave" id="wave" aria-hidden="true"></div>
+          </div>
+          <p id="spoken"></p>
+        </div>
+      </div>
+      <div class="arrow" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 24h30M28 14l10 10-10 10"/></svg>
+        <span data-t="time"></span>
+      </div>
+      <div class="say">
+        <span class="tag" data-t="youSend"></span>
+        <div class="receipt" id="receipt" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head"><h2 data-t="stepsTitle"></h2></div>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><h3 data-t="s1t"></h3><p data-t="s1d"></p></div>
+      <div class="step"><span class="num">2</span><h3 data-t="s2t"></h3><p data-t="s2d"></p></div>
+      <div class="step"><span class="num">3</span><h3 data-t="s3t"></h3><p data-t="s3d"></p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2 data-t="tradesTitle"></h2><p data-t="tradesSub"></p></div>
+    <div class="trade-cards" id="trade-cards"></div>
+  </section>
+
+  <section>
+    <div class="money">
+      <div class="sec-head" style="margin:0"><h2 data-t="moneyTitle"></h2><p data-t="moneySub"></p></div>
+      <div class="pairs" id="pairs"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2 data-t="featTitle"></h2></div>
+    <div class="features" id="features"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2 data-t="faqTitle"></h2></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <div class="join" id="join">
+    <h2 data-t="joinTitle"></h2>
+    <p data-t="joinSub"></p>
+    <div class="contact"><span data-t="contactLabel"></span><a href="mailto:muhammadabdullah484401@gmail.com">muhammadabdullah484401@gmail.com</a></div>
+  </div>
+
+  <footer>
+    <span>© 2026 QuoteVoice</span>
+    <a href="privacy.html" data-t="privacy"></a>
+  </footer>
 </div>
-<h2>How it works</h2>
-<ul>
-<li><strong>Speak:</strong> "Aslam sahab, Gulberg, 10 plate, inverter dedh lakh ka, 2 din ki mazdoori."</li>
-<li><strong>Check:</strong> the quote is filled in with your prices — edit anything in seconds.</li>
-<li><strong>Send:</strong> a clean PDF with materials, labour, total and amount in words goes out on WhatsApp.</li>
-<li><strong>Follow up:</strong> see when the customer opens it and get a reminder after 7 days.</li>
-</ul>
-<h2>Contact</h2>
-<p>Questions or support: <a href="mailto:muhammadabdullah484401@gmail.com">muhammadabdullah484401@gmail.com</a></p>
-<p><a href="privacy.html">Privacy policy</a></p>
-</main>
-<footer>© 2026 QuoteVoice</footer>
+
+<script>
+const ICONS = {
+  solar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="10" rx="1"/><path d="M3 15h18M9 10v10M15 10v10M12 2v3M5.6 4.6l1.4 1.4M18.4 4.6 17 6"/></svg>',
+  electric: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+  plumber: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h9a4 4 0 0 1 4 4v2M4 5v6M17 14v2M15 16h4M17 19v.5M17 21.5v.5"/></svg>',
+  lang: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M6 5c0 4 3 7 6 8M10 5c-1 4-4 7-6 8M13 21l4-9 4 9M14.5 18h5"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
+  receipt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+  wifi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r="1"/></svg>'
+};
+
+/* Real starter price lists from the app (names as they appear on the PDF). */
+const TRADE_ITEMS = {
+  solar: ['Solar panel','Inverter','Lithium battery','Mounting structure','DC cable','AC cable','MC4 connectors','DC breaker','Surge protection (SPD)','Earthing kit','Net metering','Installation (day)'],
+  electric: ['Wiring (per point)','Socket','Switch','LED light','Ceiling fan installation','Circuit breaker (MCB)','Distribution board','Changeover switch','UPS / inverter wiring','Cable (metre)','Earthing','Fault finding'],
+  plumber: ['Tap','Mixer','Shower set','PPR pipe (metre)','Gate valve','Commode / WC installation','Wash basin installation','Geyser installation','Water pump installation','Water tank cleaning','Leak repair','Drain cleaning']
+};
+const TRADE_TOTAL = { solar: 19, electric: 19, plumber: 19 };
+
+/* Demo quotes. Pakistan (Rs, lakh grouping) for Urdu/English; Gulf (AED) for Arabic. */
+const QUOTES = {
+  pk: {
+    solar: { no: 'Q-0012', customer: 'Aslam Sahab', site: 'Gulberg, Lahore',
+      materials: [['Solar panel', 10, 'each', 30000], ['Inverter', 1, 'each', 150000], ['Lithium battery', 2, 'each', 65000]],
+      labour: [['Installation', 2, 'per day', 15000]], words: 'Rupees six lakh ten thousand only' },
+    electric: { no: 'Q-0013', customer: 'Khan Sahab', site: 'DHA, Karachi',
+      materials: [['LED downlight', 6, 'each', 900], ['Socket', 2, 'each', 250], ['Cable', 15, 'per m', 180]],
+      labour: [['Labour', 1, 'per day', 5000]], words: 'Rupees thirteen thousand six hundred only' },
+    plumber: { no: 'Q-0014', customer: 'Rasheed Sahab', site: 'Johar Town, Lahore',
+      materials: [['Tap', 2, 'each', 1500], ['PPR pipe', 5, 'per m', 350], ['Geyser installation', 1, 'each', 4500]],
+      labour: [['Labour', 3, 'per hr', 800]], words: 'Rupees eleven thousand six hundred fifty only' }
+  },
+  gulf: {
+    solar: { no: 'Q-0012', customer: 'Mr Khalid', site: 'Al Khan, Sharjah',
+      materials: [['Solar panel', 10, 'each', 650], ['Inverter', 1, 'each', 5000], ['Lithium battery', 2, 'each', 2400]],
+      labour: [['Installation', 2, 'per day', 900]], words: 'Eighteen thousand one hundred dirhams only' },
+    electric: { no: 'Q-0013', customer: 'Mr Ahmed', site: 'Dubai Marina',
+      materials: [['LED downlight', 6, 'each', 45], ['Socket', 2, 'each', 35], ['Cable', 15, 'per m', 6]],
+      labour: [['Labour', 1, 'per day', 350]], words: 'Seven hundred eighty dirhams only' },
+    plumber: { no: 'Q-0014', customer: 'Mr Yousef', site: 'Al Ain',
+      materials: [['Tap', 2, 'each', 60], ['PPR pipe', 5, 'per m', 18], ['Water heater installation', 1, 'each', 250]],
+      labour: [['Labour', 3, 'per hr', 80]], words: 'Seven hundred dirhams only' }
+  }
+};
+
+const T = {
+  ur: {
+    eyebrow: 'سولر، الیکٹریشن اور پلمبر حضرات کے لیے',
+    title: 'بولیں، اور کوٹیشن تیار',
+    sub: 'گاہک کے پاس کھڑے کھڑے کام بتائیں، اردو، انگریزی یا دونوں ملا کر۔ ایپ آپ کی اپنی ریٹ لسٹ سے قیمتیں لگا کر تقریباً 30 سیکنڈ میں پروفیشنل PDF کوٹیشن واٹس ایپ پر بھیج دیتی ہے۔',
+    cta: 'مفت ایپ حاصل کریں', note: 'ٹیسٹنگ کے دوران بالکل مفت · اینڈرائیڈ',
+    pick: 'اپنا کام چنیں:', solar: 'سولر', electric: 'الیکٹریشن', plumber: 'پلمبر',
+    youSay: 'آپ بولتے ہیں', youSend: 'گاہک کو ملتی ہے', time: 'تقریباً 30 سیکنڈ',
+    spoken: {
+      solar: '"اسلم صاحب، گلبرگ لاہور۔ دس پلیٹیں لگانی ہیں، انورٹر ڈیڑھ لاکھ کا، دو بیٹریاں، اور دو دن کی مزدوری۔"',
+      electric: '"خان صاحب، ڈیفنس کراچی۔ چھ ایل ای ڈی لائٹیں، دو ساکٹ بدلنے ہیں، پندرہ میٹر تار، اور ایک دن کا کام۔"',
+      plumber: '"رشید صاحب، جوہر ٹاؤن۔ دو نلکے بدلنے ہیں، پانچ میٹر پائپ، گیزر لگانا ہے، تین گھنٹے کام۔"'
+    },
+    stepsTitle: 'تین قدم، ایک منٹ',
+    s1t: 'بولیں', s1d: 'مائیک دبائیں اور گاہک، جگہ، سامان اور قیمت ویسے ہی بولیں جیسے عام بات کرتے ہیں۔',
+    s2t: 'چیک کریں', s2d: 'ہر چیز کی قیمت آپ کی ریٹ لسٹ سے لگتی ہے۔ مقدار یا قیمت ایک ٹچ میں بدلیں۔',
+    s3t: 'بھیجیں', s3d: 'صاف ستھری PDF واٹس ایپ پر گاہک کو جاتی ہے، اور جب وہ کھولے تو آپ کو اطلاع ملتی ہے۔',
+    tradesTitle: 'آپ کے کام کی تیار ریٹ لسٹ',
+    tradesSub: 'سائن اپ پر اپنا کام چنیں، عام استعمال کی چیزیں پہلے سے موجود ہوں گی۔ بس ایک بار اپنی قیمتیں لکھ دیں۔',
+    items: (n) => `${n} چیزیں`, more: (n) => `+ مزید ${n}`,
+    moneyTitle: 'پیسوں کی بات آپ کے انداز میں',
+    moneySub: 'لاکھ، ہزار، سوا، ڈیڑھ، ڈھائی، ساڑھے، پونے، سب سمجھتی ہے، اور رقم کو صحیح چیز کے ساتھ لگاتی ہے۔',
+    pairs: [['ڈیڑھ لاکھ', '1,50,000'], ['سوا دو لاکھ', '2,25,000'], ['پچاس ہزار', '50,000'], ['ساڑھے تین سو', '350'], ['پونے دو ہزار', '1,750'], ['ایک کروڑ', '1,00,00,000']],
+    featTitle: 'آپ کے کام کے طریقے کے مطابق',
+    feats: [
+      ['lang', 'اردو، انگریزی، عربی', 'کسی بھی زبان میں بولیں، یا ایک ہی جملے میں ملا کر۔ ایپ خود تینوں زبانوں میں ہے۔'],
+      ['eye', 'پتہ چلے کب کھولی', 'ٹریک ہونے والا لنک بھیجیں، گاہک جیسے ہی کوٹیشن دیکھے آپ کو اطلاع مل جائے۔'],
+      ['bell', 'فالو اپ کبھی نہ بھولیں', '7 دن تک جواب نہ آئے تو ایپ یاد دلاتی ہے کہ فون کر لیں۔'],
+      ['doc', 'پروفیشنل کوٹیشن', 'سامان اور مزدوری الگ الگ، ٹوٹل، رقم الفاظ میں، آپ کی شرائط اور دستخط۔'],
+      ['receipt', 'ایک ٹچ میں کوٹیشن سے بل', 'گاہک ہاں کرے تو اسی کوٹیشن کو بل میں بدل دیں۔'],
+      ['wifi', 'سگنل کمزور؟ ڈیٹا محفوظ', 'آپ کی کوٹیشنز اور قیمتیں فون میں محفوظ رہتی ہیں اور انٹرنیٹ آنے پر سنک ہو جاتی ہیں۔']
+    ],
+    faqTitle: 'اکثر پوچھے گئے سوالات',
+    faq: [
+      ['کیا یہ مفت ہے؟', 'جی ہاں، ٹیسٹنگ کے دوران بالکل مفت ہے۔ بعد میں مفت ٹرائل کے ساتھ ایک چھوٹی ماہانہ فیس ہوگی۔'],
+      ['یہ کن فونز پر چلتی ہے؟', 'پچھلے 6 سے 7 سال کے زیادہ تر اینڈرائیڈ فونز پر۔ آئی فون ورژن بعد میں آئے گا۔'],
+      ['کیا انٹرنیٹ چاہیے؟', 'آواز کے لیے ہاں، عام موبائل انٹرنیٹ کافی ہے۔ سگنل نہ ہو تو آپ کوٹیشن ٹائپ بھی کر سکتے ہیں۔'],
+      ['کیا میری قیمتیں اور گاہک محفوظ ہیں؟', 'آپ کا ڈیٹا صرف آپ کے اکاؤنٹ کا ہے۔ ہم اسے کبھی نہیں بیچتے، اور آواز کی ریکارڈنگ محفوظ نہیں کی جاتی۔'],
+      ['انسٹال کرتے وقت وارننگ کیوں آتی ہے؟', 'ٹیسٹ ورژن ابھی پلے اسٹور پر نہیں ہے، اس لیے اینڈرائیڈ وارننگ دیتا ہے۔ "Install anyway" دبا دیں۔ پلے اسٹور پر آنے کے بعد یہ وارننگ نہیں آئے گی۔']
+    ],
+    joinTitle: 'آپ کی اگلی کوٹیشن، 30 سیکنڈ میں',
+    joinSub: 'مفت ٹیسٹنگ میں شامل ہوں، ایپ استعمال کریں، اور بتائیں کیا بہتر کریں۔',
+    contactLabel: 'ایپ کے لیے رابطہ کریں:', privacy: 'پرائیویسی پالیسی'
+  },
+  en: {
+    eyebrow: 'For solar installers, electricians and plumbers',
+    title: 'Speak the job. Send the quote.',
+    sub: 'Describe the work at the customer\'s place, in Urdu, English or a mix of both. QuoteVoice prices it from your own rate list and sends a professional PDF quote on WhatsApp in about 30 seconds.',
+    cta: 'Get the free app', note: 'Free while we test · Android',
+    pick: 'Pick a trade:', solar: 'Solar', electric: 'Electrician', plumber: 'Plumber',
+    youSay: 'You say', youSend: 'Your customer gets', time: 'about 30 seconds',
+    spoken: {
+      solar: '"Aslam sahab, Gulberg Lahore. Ten panels, inverter dedh lakh ka, two batteries, and two days labour."',
+      electric: '"Khan sahab, DHA Karachi. Six LED downlights, replace two sockets, fifteen metres of cable, one day\'s work."',
+      plumber: '"Rasheed sahab, Johar Town. Replace two taps, five metres of pipe, install the geyser, three hours\' work."'
+    },
+    stepsTitle: 'Three steps, one minute',
+    s1t: 'Speak', s1d: 'Tap the mic and say the customer, the place, the items and any price, the way you normally talk.',
+    s2t: 'Check', s2d: 'Every item is priced from your rate list. Change a quantity or price with one tap.',
+    s3t: 'Send', s3d: 'A clean PDF goes to the customer on WhatsApp. You get a notification when they open it.',
+    tradesTitle: 'Ready rate lists for your trade',
+    tradesSub: 'Pick your trade when you sign up and the usual items are already there. Add your prices once.',
+    items: (n) => `${n} items`, more: (n) => `+ ${n} more`,
+    moneyTitle: 'It understands how you say money',
+    moneySub: 'Lakh, hazaar, sawa, dedh, dhai, saadhe, paune: it gets them all, and puts each amount on the right item.',
+    pairs: [['dedh lakh', '1,50,000'], ['sawa do lakh', '2,25,000'], ['pachas hazaar', '50,000'], ['saadhe teen sau', '350'], ['paune do hazaar', '1,750'], ['ek crore', '1,00,00,000']],
+    featTitle: 'Built for the way you work',
+    feats: [
+      ['lang', 'Urdu, English, Arabic', 'Speak in any of them, or mix them in one sentence. The app itself is in all three.'],
+      ['eye', 'Know when they open it', 'Send a tracked link and get a notification the moment your customer views the quote.'],
+      ['bell', 'Never forget to follow up', 'No reply after 7 days? QuoteVoice reminds you to call.'],
+      ['doc', 'A quote that looks professional', 'Materials and labour in separate sections, totals, amount in words, your terms and signature.'],
+      ['receipt', 'Quote to invoice in one tap', 'When the customer says yes, turn the same quote into an invoice.'],
+      ['wifi', 'Weak signal? Data is safe', 'Your quotes and prices stay on your phone and sync when you\'re back online.']
+    ],
+    faqTitle: 'Questions',
+    faq: [
+      ['Is it free?', 'Yes, completely free while we test it. Later it will be a small monthly subscription with a free trial.'],
+      ['Which phones does it work on?', 'Most Android phones from the last 6 to 7 years. An iPhone version is coming later.'],
+      ['Do I need internet?', 'For voice, yes. A normal mobile connection is enough. Without signal you can still type a quote.'],
+      ['Are my prices and customers safe?', 'Your data belongs to your account only. We never sell it, and voice recordings are not stored.'],
+      ['Why does Android show a warning when I install it?', 'The test version is not on the Play Store yet, so Android warns you. Tap "Install anyway". The warning goes away once we launch on the Play Store.']
+    ],
+    joinTitle: 'Your next quote, in 30 seconds',
+    joinSub: 'Join the free beta, use it on real jobs, and tell us what to improve.',
+    contactLabel: 'Get the app:', privacy: 'Privacy policy'
+  },
+  ar: {
+    eyebrow: 'لفنيي الطاقة الشمسية والكهرباء والسباكة',
+    title: 'تكلّم عن العمل، وأرسل عرض السعر',
+    sub: 'صِف العمل وأنت عند العميل، بالعربية أو الإنجليزية أو الأردية. يسعّره QuoteVoice من قائمة أسعارك ويرسل عرض سعر PDF احترافياً عبر واتساب في نحو 30 ثانية.',
+    cta: 'احصل على التطبيق مجاناً', note: 'مجاني خلال فترة التجربة · أندرويد',
+    pick: 'اختر مهنتك:', solar: 'طاقة شمسية', electric: 'كهربائي', plumber: 'سبّاك',
+    youSay: 'أنت تقول', youSend: 'يصل إلى عميلك', time: 'نحو 30 ثانية',
+    spoken: {
+      solar: '"الأستاذ خالد، الخان في الشارقة. عشرة ألواح شمسية، إنفرتر بخمسة آلاف درهم، بطاريتان، ويوما تركيب."',
+      electric: '"السيد أحمد، دبي مارينا. ست إضاءات LED، تغيير مقبسين، خمسة عشر متر كابل، ويوم عمل."',
+      plumber: '"السيد يوسف، العين. تغيير صنبورين، خمسة أمتار أنابيب، تركيب سخان ماء، وثلاث ساعات عمل."'
+    },
+    stepsTitle: 'ثلاث خطوات، دقيقة واحدة',
+    s1t: 'تكلّم', s1d: 'اضغط على الميكروفون واذكر العميل والمكان والمواد وأي سعر، بطريقتك المعتادة في الكلام.',
+    s2t: 'راجِع', s2d: 'كل بند يُسعَّر من قائمة أسعارك. غيّر الكمية أو السعر بلمسة واحدة.',
+    s3t: 'أرسِل', s3d: 'يصل ملف PDF أنيق إلى العميل عبر واتساب، ويصلك إشعار عندما يفتحه.',
+    tradesTitle: 'قوائم أسعار جاهزة لمهنتك',
+    tradesSub: 'اختر مهنتك عند التسجيل وستجد البنود المعتادة جاهزة. أدخل أسعارك مرة واحدة فقط.',
+    items: (n) => `${n} بنداً`, more: (n) => `+ ${n} أخرى`,
+    moneyTitle: 'يفهم الأرقام كما تقولها',
+    moneySub: 'الآلاف والمئات والدراهم، وكذلك اللاك والكرور في باكستان، ويضع كل مبلغ على البند الصحيح.',
+    pairs: [['ألف وخمسمئة', '1,500'], ['خمسة آلاف درهم', '5,000'], ['مئتان وخمسون', '250'], ['عشرون ألفاً', '20,000'], ['ثلاثة آلاف ونصف', '3,500'], ['dedh lakh', '1,50,000']],
+    featTitle: 'مصمم على طريقة عملك',
+    feats: [
+      ['lang', 'العربية والإنجليزية والأردية', 'تكلّم بأيّ منها أو امزج بينها في جملة واحدة. التطبيق نفسه متوفر باللغات الثلاث.'],
+      ['eye', 'اعرف متى فتح العرض', 'أرسل رابطاً قابلاً للتتبع، ويصلك إشعار لحظة اطّلاع العميل على العرض.'],
+      ['bell', 'لا تنسَ المتابعة أبداً', 'لا رد بعد 7 أيام؟ يذكّرك التطبيق بالاتصال بالعميل.'],
+      ['doc', 'عرض سعر احترافي', 'المواد والعمالة في أقسام منفصلة، والإجمالي، والمبلغ كتابةً، وشروطك وتوقيعك.'],
+      ['receipt', 'من عرض سعر إلى فاتورة بلمسة', 'عندما يوافق العميل، حوّل العرض نفسه إلى فاتورة.'],
+      ['wifi', 'الإشارة ضعيفة؟ بياناتك محفوظة', 'تبقى عروضك وأسعارك على هاتفك وتتم مزامنتها عند عودة الاتصال.']
+    ],
+    faqTitle: 'أسئلة شائعة',
+    faq: [
+      ['هل هو مجاني؟', 'نعم، مجاني تماماً خلال فترة التجربة. لاحقاً سيكون باشتراك شهري بسيط مع فترة تجربة مجانية.'],
+      ['على أي هواتف يعمل؟', 'على معظم هواتف أندرويد من آخر 6 إلى 7 سنوات. نسخة آيفون قادمة لاحقاً.'],
+      ['هل أحتاج إلى إنترنت؟', 'للصوت نعم، ويكفي اتصال الهاتف العادي. ويمكنك كتابة العرض يدوياً دون إشارة.'],
+      ['هل أسعاري وبيانات عملائي آمنة؟', 'بياناتك خاصة بحسابك فقط. لا نبيعها أبداً، ولا نحتفظ بالتسجيلات الصوتية.'],
+      ['لماذا يظهر تحذير عند التثبيت؟', 'النسخة التجريبية ليست على متجر Play بعد، لذلك يظهر تحذير أندرويد. اضغط "Install anyway". سيختفي التحذير بعد الإطلاق على المتجر.']
+    ],
+    joinTitle: 'عرض سعرك القادم في 30 ثانية',
+    joinSub: 'انضم إلى النسخة التجريبية المجانية، واستخدمها في أعمال حقيقية، وأخبرنا بما نحسّنه.',
+    contactLabel: 'للحصول على التطبيق:', privacy: 'سياسة الخصوصية'
+  }
+};
+
+let lang = 'ur';
+let trade = 'solar';
+try { const saved = localStorage.getItem('qv-lang'); if (saved && T[saved]) lang = saved; } catch (e) {}
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function money(n, region) {
+  return region === 'pk' ? 'Rs ' + n.toLocaleString('en-IN') : 'AED ' + n.toLocaleString('en-US');
+}
+
+function renderReceipt(animate) {
+  const region = lang === 'ar' ? 'gulf' : 'pk';
+  const q = QUOTES[region][trade];
+  const row = (r) => `<tr><td>${esc(r[0])}<br><span class="unit">${r[1]} × ${money(r[3], region)} ${r[2]}</span></td><td class="n">${r[1]}</td><td class="n">${money(r[1] * r[3], region)}</td></tr>`;
+  const total = [...q.materials, ...q.labour].reduce((s, r) => s + r[1] * r[3], 0);
+  $('#receipt').innerHTML = `
+    <div class="r-head"><span class="r-title">QUOTATION</span><span>${q.no}</span></div>
+    <div class="r-meta"><span>Customer</span><b>${esc(q.customer)}</b><span>Site</span><b>${esc(q.site)}</b></div>
+    <table>
+      <thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Amount</th></tr></thead>
+      <tbody class="${animate ? 'rows-in' : ''}">
+        <tr class="group"><td colspan="3">Materials</td></tr>
+        ${q.materials.map(row).join('')}
+        <tr class="group"><td colspan="3">Labour</td></tr>
+        ${q.labour.map(row).join('')}
+      </tbody>
+    </table>
+    <div class="r-total"><span>Total<span class="bar"></span></span><strong>${money(total, region)}</strong></div>
+    <div class="r-words">${esc(q.words)}</div>
+    <div class="r-foot"><span>Valid for 7 days</span><span>Sent on WhatsApp ✓</span></div>`;
+  if (animate) document.querySelectorAll('.rows-in tr').forEach((tr, i) => { tr.style.animationDelay = (i * 70) + 'ms'; });
+}
+
+function render(animate) {
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'en' ? 'ltr' : 'rtl';
+  document.querySelectorAll('[data-t]').forEach((el) => { const v = t[el.dataset.t]; if (typeof v === 'string') el.textContent = v; });
+  document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  document.querySelectorAll('.tab').forEach((b) => {
+    b.innerHTML = ICONS[b.dataset.trade] + `<span>${esc(t[b.dataset.trade])}</span>`;
+    b.setAttribute('aria-selected', String(b.dataset.trade === trade));
+    b.tabIndex = b.dataset.trade === trade ? 0 : -1;
+  });
+  $('#spoken').textContent = t.spoken[trade];
+  renderReceipt(animate);
+
+  $('#trade-cards').innerHTML = ['solar', 'electric', 'plumber'].map((k) => {
+    const shown = TRADE_ITEMS[k];
+    return `<article class="tcard"><header><span class="ticon">${ICONS[k]}</span><div><h3>${esc(t[k])}</h3><span class="count">${esc(t.items(TRADE_TOTAL[k]))}</span></div></header>
+      <div class="chips">${shown.map((n) => `<span class="chip">${esc(n)}</span>`).join('')}<span class="chip more">${esc(t.more(TRADE_TOTAL[k] - shown.length))}</span></div></article>`;
+  }).join('');
+
+  $('#pairs').innerHTML = t.pairs.map(([said, num]) => `<div class="pair"><span class="said" ${/[a-z]/i.test(said) ? 'lang="ur-Latn" dir="ltr"' : ''}>${esc(said)}</span><span class="num">${esc(num)}</span></div>`).join('');
+  $('#features').innerHTML = t.feats.map(([icon, h, p]) => `<div class="feat">${ICONS[icon]}<h3>${esc(h)}</h3><p>${esc(p)}</p></div>`).join('');
+  $('#faq').innerHTML = t.faq.map(([q, a], i) => `<details id="faq-${i}"${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
+  document.title = lang === 'ur' ? 'QuoteVoice — بولیں، کوٹیشن تیار' : lang === 'ar' ? 'QuoteVoice — عرض السعر بالصوت' : 'QuoteVoice';
+}
+
+/* Waveform bars (static heights, gently animated). */
+$('#wave').innerHTML = Array.from({ length: 28 }, (_, i) => {
+  const h = 30 + Math.round(Math.abs(Math.sin(i * 1.7)) * 70);
+  return `<i style="height:${h}%;animation-delay:${(i % 7) * 0.12}s"></i>`;
+}).join('');
+
+document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => {
+  lang = b.dataset.lang;
+  try { localStorage.setItem('qv-lang', lang); } catch (e) {}
+  render(true);
+}));
+document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { trade = b.dataset.trade; render(true); }));
+$('.tabs').addEventListener('keydown', (e) => {
+  const order = ['solar', 'electric', 'plumber'];
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const rtl = document.documentElement.dir === 'rtl';
+  const step = (e.key === 'ArrowRight') !== rtl ? 1 : -1;
+  trade = order[(order.indexOf(trade) + step + 3) % 3];
+  render(true);
+  document.querySelector(`.tab[data-trade="${trade}"]`).focus();
+});
+
+render(false);
+</script>
 </body>
 </html>
