@@ -184,9 +184,16 @@ footer { padding: 28px 0 40px; color: var(--muted); font-size: .9rem; display: f
 @media (prefers-reduced-motion: reduce) {
   .wave i, .rows-in tr { animation: none; }
 }
+/* Launch banner */
+.launch { background: var(--brand-deep); color: #EAF7F4; }
+.launch .wrap { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; text-align: center; font-size: .95rem; }
+.launch .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px rgba(242,165,22,.25); flex: none; }
+.launch strong { color: #FBD38D; }
+.launch a { color: #fff; font-weight: 700; }
 </style>
 </head>
 <body>
+<div class="launch" role="note"><div class="wrap"><span class="dot" aria-hidden="true"></span><span><strong data-t="soonBig"></strong> <span data-t="soonWhen"></span></span><a href="#join" data-t="soonCta"></a></div></div>
 <div class="wrap">
   <div class="top">
     <a class="brand" href="#top" aria-label="QuoteVoice">
@@ -338,10 +345,11 @@ const QUOTES = {
 
 const T = {
   ur: {
+    soonBig: 'کچھ بڑا آنے والا ہے۔', soonWhen: 'نومبر کے آخر میں گوگل پلے پر لانچ۔', soonCta: 'پہلے رسائی حاصل کریں',
     eyebrow: 'سولر، الیکٹریشن اور پلمبر حضرات کے لیے',
     title: 'بولیں، اور کوٹیشن تیار',
     sub: 'گاہک کے پاس کھڑے کھڑے کام بتائیں، اردو، انگریزی یا دونوں ملا کر۔ ایپ آپ کی اپنی ریٹ لسٹ سے قیمتیں لگا کر تقریباً 30 سیکنڈ میں پروفیشنل PDF کوٹیشن واٹس ایپ پر بھیج دیتی ہے۔',
-    cta: 'مفت ایپ حاصل کریں', note: 'ٹیسٹنگ کے دوران بالکل مفت · اینڈرائیڈ',
+    cta: 'مفت ایپ حاصل کریں', note: 'ابتدائی رسائی مفت · اینڈرائیڈ · گوگل پلے لانچ نومبر کے آخر میں',
     pick: 'اپنا کام چنیں:', solar: 'سولر', electric: 'الیکٹریشن', plumber: 'پلمبر',
     youSay: 'آپ بولتے ہیں', youSend: 'گاہک کو ملتی ہے', time: 'تقریباً 30 سیکنڈ',
     spoken: {
@@ -381,10 +389,11 @@ const T = {
     contactLabel: 'ایپ کے لیے رابطہ کریں:', privacy: 'پرائیویسی پالیسی'
   },
   en: {
+    soonBig: 'Something big is coming.', soonWhen: 'Launching on Google Play in late November.', soonCta: 'Get early access',
     eyebrow: 'For solar installers, electricians and plumbers',
     title: 'Speak the job. Send the quote.',
     sub: 'Describe the work at the customer\'s place, in Urdu, English or a mix of both. QuoteVoice prices it from your own rate list and sends a professional PDF quote on WhatsApp in about 30 seconds.',
-    cta: 'Get the free app', note: 'Free while we test · Android',
+    cta: 'Get the free app', note: 'Free early access · Android · Google Play launch in late November',
     pick: 'Pick a trade:', solar: 'Solar', electric: 'Electrician', plumber: 'Plumber',
     youSay: 'You say', youSend: 'Your customer gets', time: 'about 30 seconds',
     spoken: {
@@ -424,10 +433,11 @@ const T = {
     contactLabel: 'Get the app:', privacy: 'Privacy policy'
   },
   ar: {
+    soonBig: 'شيء كبير قادم.', soonWhen: 'الإطلاق على Google Play في أواخر نوفمبر.', soonCta: 'احصل على وصول مبكر',
     eyebrow: 'لفنيي الطاقة الشمسية والكهرباء والسباكة',
     title: 'تكلّم عن العمل، وأرسل عرض السعر',
     sub: 'صِف العمل وأنت عند العميل، بالعربية أو الإنجليزية أو الأردية. يسعّره QuoteVoice من قائمة أسعارك ويرسل عرض سعر PDF احترافياً عبر واتساب في نحو 30 ثانية.',
-    cta: 'احصل على التطبيق مجاناً', note: 'مجاني خلال فترة التجربة · أندرويد',
+    cta: 'احصل على التطبيق مجاناً', note: 'وصول مبكر مجاني · أندرويد · الإطلاق على Google Play أواخر نوفمبر',
     pick: 'اختر مهنتك:', solar: 'طاقة شمسية', electric: 'كهربائي', plumber: 'سبّاك',
     youSay: 'أنت تقول', youSend: 'يصل إلى عميلك', time: 'نحو 30 ثانية',
     spoken: {
