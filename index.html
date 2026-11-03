@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ur" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -468,9 +468,9 @@ const T = {
   }
 };
 
-let lang = 'ur';
+let lang = 'en';
 let trade = 'solar';
-try { const saved = localStorage.getItem('qv-lang'); if (saved && T[saved]) lang = saved; } catch (e) {}
+try { const saved = localStorage.getItem('qv-lang2'); if (saved && T[saved]) lang = saved; } catch (e) {}
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -536,7 +536,7 @@ $('#wave').innerHTML = Array.from({ length: 28 }, (_, i) => {
 
 document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => {
   lang = b.dataset.lang;
-  try { localStorage.setItem('qv-lang', lang); } catch (e) {}
+  try { localStorage.setItem('qv-lang2', lang); } catch (e) {}
   render(true);
 }));
 document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { trade = b.dataset.trade; render(true); }));
